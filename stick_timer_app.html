@@ -1,107 +1,74 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stick Control</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f0f0f;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      margin-top: 0;
-      font-size: 28px;
-      font-weight: 700;
-    }
-
-    .timer {
-      font-size: 48px;
-      margin: 20px 0;
-      font-weight: bold;
-    }
-
-    button {
-      padding: 15px 25px;
-      font-size: 18px;
-      border: none;
-      border-radius: 12px;
-      background: #1e88e5;
-      color: white;
-      cursor: pointer;
-      margin: 10px;
-    }
-
-    button:disabled {
-      background: #555;
-      cursor: not-allowed;
-    }
-
-    .reset {
-      background: #d32f2f;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Счетчик стиков</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+  button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+  #timer { font-size: 24px; margin: 20px; }
+  #count { font-size: 20px; margin: 10px; }
+</style>
 </head>
 <body>
-  <h1>Контроль стиков</h1>
+<h1>Счетчик стиков</h1>
+<div id="count">Выкурено: 0</div>
+<div id="timer">Следующий стик через: 00:00</div>
+<button id="smokeBtn">Покурил</button>
+<button id="resetBtn">Сбросить</button>
 
-  <!-- Большой таймер -->
-  <div id="countdown" class="timer">00:00</div>
+<script>
+let smokeCount = localStorage.getItem('smokeCount') ? parseInt(localStorage.getItem('smokeCount')) : 0;
+let timerEnd = localStorage.getItem('timerEnd') ? parseInt(localStorage.getItem('timerEnd')) : null;
 
-  <button id="useStick">Выплюнуть стик</button>
-  <button class="reset" id="resetTimer">Сброс</button>
+const countEl = document.getElementById('count');
+const timerEl = document.getElementById('timer');
+const smokeBtn = document.getElementById('smokeBtn');
+const resetBtn = document.getElementById('resetBtn');
 
-  <script>
-    let interval = null;
-    let cooldown = 35 * 60; // 35 минут в секундах — можно менять
-    let remaining = 0;
+function updateCount() {
+    countEl.textContent = 'Выкурено: ' + smokeCount;
+}
 
-    function updateDisplay() {
-      const m = String(Math.floor(remaining / 60)).padStart(2, '0');
-      const s = String(remaining % 60).padStart(2, '0');
-      document.getElementById('countdown').textContent = `${m}:${s}`;
+function startTimer() {
+    const now = Date.now();
+    timerEnd = now + 15 * 60 * 1000; // 15 минут до следующего стика
+    localStorage.setItem('timerEnd', timerEnd);
+}
+
+function updateTimer() {
+    if(!timerEnd) {
+        timerEl.textContent = 'Следующий стик через: 00:00';
+        return;
     }
+    const now = Date.now();
+    let diff = timerEnd - now;
+    if(diff < 0) diff = 0;
+    const minutes = Math.floor(diff / 60000).toString().padStart(2,'0');
+    const seconds = Math.floor((diff % 60000) / 1000).toString().padStart(2,'0');
+    timerEl.textContent = 'Следующий стик через: ' + minutes + ':' + seconds;
+}
 
-    function startTimer() {
-      remaining = cooldown;
-      updateDisplay();
+smokeBtn.addEventListener('click', () => {
+    smokeCount++;
+    localStorage.setItem('smokeCount', smokeCount);
+    updateCount();
+    startTimer();
+});
 
-      if (interval) clearInterval(interval);
+resetBtn.addEventListener('click', () => {
+    smokeCount = 0;
+    timerEnd = null;
+    localStorage.removeItem('smokeCount');
+    localStorage.removeItem('timerEnd');
+    updateCount();
+    updateTimer();
+});
 
-      interval = setInterval(() => {
-        if (remaining > 0) {
-          remaining--;
-          updateDisplay();
-        } else {
-          clearInterval(interval);
-          interval = null;
-          document.getElementById('useStick').disabled = false;
-          document.getElementById('countdown').textContent = 'МОЖНО';
-        }
-      }, 1000);
-    }
-
-    document.getElementById('useStick').addEventListener('click', () => {
-      document.getElementById('useStick').disabled = true;
-      startTimer();
-    });
-
-    document.getElementById('resetTimer').addEventListener('click', () => {
-      if (interval) clearInterval(interval);
-      remaining = 0;
-      updateDisplay();
-      document.getElementById('countdown').textContent = '00:00';
-      document.getElementById('useStick').disabled = false;
-    });
-
-    updateDisplay();
-  </script>
+updateCount();
+updateTimer();
+setInterval(updateTimer, 1000);
+</script>
 </body>
 </html>
