@@ -19,56 +19,59 @@
 <button id="resetBtn">Сбросить</button>
 
 <script>
-let smokeCount = localStorage.getItem('smokeCount') ? parseInt(localStorage.getItem('smokeCount')) : 0;
-let timerEnd = localStorage.getItem('timerEnd') ? parseInt(localStorage.getItem('timerEnd')) : null;
+document.addEventListener('DOMContentLoaded', () => {
+    // Получаем данные из localStorage
+    let smokeCount = parseInt(localStorage.getItem('smokeCount')) || 0;
+    let timerEnd = parseInt(localStorage.getItem('timerEnd')) || null;
 
-const countEl = document.getElementById('count');
-const timerEl = document.getElementById('timer');
-const smokeBtn = document.getElementById('smokeBtn');
-const resetBtn = document.getElementById('resetBtn');
+    const countEl = document.getElementById('count');
+    const timerEl = document.getElementById('timer');
+    const smokeBtn = document.getElementById('smokeBtn');
+    const resetBtn = document.getElementById('resetBtn');
 
-function updateCount() {
-    countEl.textContent = 'Выкурено: ' + smokeCount;
-}
-
-function startTimer() {
-    const now = Date.now();
-    timerEnd = now + 15 * 60 * 1000; // 15 минут до следующего стика
-    localStorage.setItem('timerEnd', timerEnd);
-}
-
-function updateTimer() {
-    if(!timerEnd) {
-        timerEl.textContent = 'Следующий стик через: 00:00';
-        return;
+    function updateCount() {
+        countEl.textContent = 'Выкурено: ' + smokeCount;
     }
-    const now = Date.now();
-    let diff = timerEnd - now;
-    if(diff < 0) diff = 0;
-    const minutes = Math.floor(diff / 60000).toString().padStart(2,'0');
-    const seconds = Math.floor((diff % 60000) / 1000).toString().padStart(2,'0');
-    timerEl.textContent = 'Следующий стик через: ' + minutes + ':' + seconds;
-}
 
-smokeBtn.addEventListener('click', () => {
-    smokeCount++;
-    localStorage.setItem('smokeCount', smokeCount);
-    updateCount();
-    startTimer();
-});
+    function startTimer() {
+        const now = Date.now();
+        timerEnd = now + 15 * 60 * 1000; // 15 минут
+        localStorage.setItem('timerEnd', timerEnd);
+    }
 
-resetBtn.addEventListener('click', () => {
-    smokeCount = 0;
-    timerEnd = null;
-    localStorage.removeItem('smokeCount');
-    localStorage.removeItem('timerEnd');
+    function updateTimer() {
+        if (!timerEnd) {
+            timerEl.textContent = 'Следующий стик через: 00:00';
+            return;
+        }
+        const now = Date.now();
+        let diff = timerEnd - now;
+        if (diff < 0) diff = 0;
+        const minutes = Math.floor(diff / 60000).toString().padStart(2, '0');
+        const seconds = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+        timerEl.textContent = 'Следующий стик через: ' + minutes + ':' + seconds;
+    }
+
+    smokeBtn.addEventListener('click', () => {
+        smokeCount++;
+        localStorage.setItem('smokeCount', smokeCount);
+        updateCount();
+        startTimer();
+    });
+
+    resetBtn.addEventListener('click', () => {
+        smokeCount = 0;
+        timerEnd = null;
+        localStorage.removeItem('smokeCount');
+        localStorage.removeItem('timerEnd');
+        updateCount();
+        updateTimer();
+    });
+
     updateCount();
     updateTimer();
+    setInterval(updateTimer, 1000);
 });
-
-updateCount();
-updateTimer();
-setInterval(updateTimer, 1000);
 </script>
 </body>
 </html>
